@@ -57,7 +57,7 @@ export default function Home() {
 
         <div className="mt-16 flex flex-wrap items-center justify-center gap-6">
           <Link
-            href={siteConfig.links.x}
+            href={new URL(siteConfig.links.x)}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -66,7 +66,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href={siteConfig.links.github}
+            href={new URL(siteConfig.links.github)}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -75,7 +75,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href={siteConfig.links.linkedin}
+            href={new URL(siteConfig.links.linkedin)}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -84,7 +84,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href={`mailto:${siteConfig.links.mail}`}
+            href={new URL(`mailto:${siteConfig.links.mail}`)}
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <Mail className="h-5 w-5 transition-transform group-hover:scale-110" />
