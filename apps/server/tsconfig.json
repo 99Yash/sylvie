@@ -1,5 +1,5 @@
 {
-	"extends": "@ciaran/config/tsconfig.base.json",
+	"extends": "@sylvie/config/tsconfig.base.json",
 	"compilerOptions": {
 		"composite": true,
 		"outDir": "dist",

@@ -1,5 +1,5 @@
-import { db } from '@ciaran/db';
-import * as schema from '@ciaran/db/schema/auth';
+import { db } from '@sylvie/db';
+import * as schema from '@sylvie/db/schema/auth';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 

@@ -1,4 +1,4 @@
-import { createAuthServerClient } from '@ciaran/auth';
+import { createAuthServerClient } from '@sylvie/auth';
 
 const SERVER_URL =
   process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3001';

@@ -1,5 +1,5 @@
 {
-  "name": "@ciaran/auth",
+  "name": "@sylvie/auth",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "tsdown": "catalog:",
-    "@ciaran/config": "workspace:*"
+    "@sylvie/config": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -25,6 +25,6 @@
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:",
-    "@ciaran/db": "workspace:*"
+    "@sylvie/db": "workspace:*"
   }
 }

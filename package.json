@@ -13,10 +13,10 @@
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
-    "db:push": "turbo -F @ciaran/db db:push",
-    "db:studio": "turbo -F @ciaran/db db:studio",
-    "db:generate": "turbo -F @ciaran/db db:generate",
-    "db:migrate": "turbo -F @ciaran/db db:migrate"
+    "db:push": "turbo -F @sylvie/db db:push",
+    "db:studio": "turbo -F @sylvie/db db:studio",
+    "db:generate": "turbo -F @sylvie/db db:generate",
+    "db:migrate": "turbo -F @sylvie/db db:migrate"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
