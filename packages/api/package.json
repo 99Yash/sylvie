@@ -1,0 +1,33 @@
+{
+  "name": "@ciaran/api",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "@ciaran/config": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@trpc/server": "catalog:",
+    "@trpc/client": "catalog:",
+    "elysia": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:",
+    "@ciaran/auth": "workspace:*",
+    "@ciaran/db": "workspace:*"
+  }
+}
