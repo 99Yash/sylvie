@@ -7,6 +7,7 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
 
+const PORT = process.env.PORT || 3001;
 new Elysia({ adapter: node() })
   .use(
     cors({
@@ -33,6 +34,6 @@ new Elysia({ adapter: node() })
     return res;
   })
   .get('/', () => 'OK')
-  .listen(3001, () => {
-    console.log('Server is running on http://localhost:3001');
+  .listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
