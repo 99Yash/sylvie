@@ -11,8 +11,8 @@ new Elysia({ adapter: node() })
   .use(
     cors({
       origin: process.env.CORS_ORIGIN || '',
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
       credentials: true,
     })
   )
