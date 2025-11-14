@@ -1,13 +1,12 @@
-import { headers } from 'next/headers';
+'use client';
+
 import { redirect } from 'next/navigation';
 import { OAuthButtons } from '~/app/(auth)/signin/oauth-buttons';
-import { authServer } from '~/lib/auth/server';
+import { authClient } from '~/lib/auth/client';
 import { EmailSignIn } from './email-signin';
 
-export default async function AuthenticationPage() {
-  const session = await authServer.api.getSession({
-    headers: await headers(),
-  });
+export default function AuthenticationPage() {
+  const { data: session } = authClient.useSession();
 
   if (session?.user) {
     redirect('/');
