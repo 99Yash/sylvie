@@ -23,9 +23,10 @@ export const auth = betterAuth<BetterAuthOptions>({
     },
   },
   advanced: {
+    cookiePrefix: 'sylvie__',
     defaultCookieAttributes: {
       sameSite: 'lax',
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
     },
   },

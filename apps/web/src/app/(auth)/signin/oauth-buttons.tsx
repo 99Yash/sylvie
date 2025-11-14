@@ -44,7 +44,7 @@ const OAuthButton: React.FC<OAuthButtonProps> = ({ providerId, className }) => {
     try {
       await authClient.signIn.social({
         provider: providerId,
-        callbackURL: '/',
+        callbackURL: `${window.location.origin}/`,
       });
 
       setLocalStorageItem(
