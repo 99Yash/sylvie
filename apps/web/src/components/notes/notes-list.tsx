@@ -14,6 +14,45 @@ import {
 import { Skeleton } from '~/components/ui/skeleton';
 import { trpc } from '~/lib/trpc';
 
+/**
+ * Extract plain text from HTML string for content preview
+ */
+function getPlainText(html: string): string {
+  if (typeof window === 'undefined') {
+    // Server-side: basic HTML tag removal and entity decoding
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+/**
+ * Format content preview with character limit and ellipsis
+ */
+function formatContentPreview(html: string, maxLength: number = 150): string {
+  const plainText = getPlainText(html);
+  if (plainText.length <= maxLength) {
+    return plainText;
+  }
+  // Truncate at word boundary if possible
+  const truncated = plainText.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.slice(0, lastSpace) + '...';
+  }
+  return truncated + '...';
+}
+
 export function NotesList() {
   const {
     data: notes,
@@ -110,8 +149,8 @@ export function NotesList() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap wrap-break-word">
-              {note.content}
+            <p className="text-sm text-muted-foreground line-clamp-3 wrap-break-word">
+              {formatContentPreview(note.content)}
             </p>
           </CardContent>
         </Card>
