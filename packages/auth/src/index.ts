@@ -14,12 +14,19 @@ export const auth = betterAuth<BetterAuthOptions>({
   emailAndPassword: {
     enabled: true,
   },
+  telemetry: {
+    debug: process.env.NODE_ENV === 'development',
+  },
   socialProviders: {
     google: {
       display: 'popup',
       prompt: 'select_account',
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
     },
   },
   advanced: {
