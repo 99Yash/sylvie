@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3001;
 new Elysia({ adapter: node() })
   .use(
     cors({
-      origin: process.env.CORS_ORIGIN || '',
+      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
       methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
       credentials: true,
