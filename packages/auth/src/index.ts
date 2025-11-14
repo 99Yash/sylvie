@@ -1,5 +1,5 @@
-import { db } from '@ciaran/db';
-import * as schema from '@ciaran/db/schema/auth';
+import { db } from '@sylvie/db';
+import * as schema from '@sylvie/db/schema/auth';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
@@ -14,6 +14,9 @@ export const auth = betterAuth<BetterAuthOptions>({
   emailAndPassword: {
     enabled: true,
   },
+  telemetry: {
+    debug: process.env.NODE_ENV === 'development',
+  },
   socialProviders: {
     google: {
       display: 'popup',
@@ -21,11 +24,16 @@ export const auth = betterAuth<BetterAuthOptions>({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    },
   },
   advanced: {
+    cookiePrefix: 'sylvie__',
     defaultCookieAttributes: {
-      sameSite: 'none',
-      secure: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
     },
   },

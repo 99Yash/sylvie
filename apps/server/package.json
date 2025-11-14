@@ -18,15 +18,15 @@
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:",
-    "@ciaran/api": "workspace:*",
-    "@ciaran/auth": "workspace:*",
-    "@ciaran/db": "workspace:*"
+    "@sylvie/api": "workspace:*",
+    "@sylvie/auth": "workspace:*",
+    "@sylvie/db": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",
     "tsx": "^4.19.2",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
-    "@ciaran/config": "workspace:*"
+    "@sylvie/config": "workspace:*"
   }
 }

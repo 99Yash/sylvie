@@ -1,18 +1,19 @@
-import { createContext } from '@ciaran/api/context';
-import { appRouter } from '@ciaran/api/routers/index';
-import { auth } from '@ciaran/auth';
 import { cors } from '@elysiajs/cors';
 import { node } from '@elysiajs/node';
+import { createContext } from '@sylvie/api/context';
+import { appRouter } from '@sylvie/api/routers/index';
+import { auth } from '@sylvie/auth';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import 'dotenv/config';
 import { Elysia } from 'elysia';
 
+const PORT = process.env.PORT || 3001;
 new Elysia({ adapter: node() })
   .use(
     cors({
-      origin: process.env.CORS_ORIGIN || '',
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
       credentials: true,
     })
   )
@@ -33,6 +34,6 @@ new Elysia({ adapter: node() })
     return res;
   })
   .get('/', () => 'OK')
-  .listen(3001, () => {
-    console.log('Server is running on http://localhost:3001');
+  .listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
   });

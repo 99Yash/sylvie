@@ -56,39 +56,39 @@ export default function Home() {
         </div>
 
         <div className="mt-16 flex flex-wrap items-center justify-center gap-6">
-          <Link
+          <a
             href={siteConfig.links.x}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <X className="h-5 w-5 transition-transform group-hover:scale-110" />
-          </Link>
+          </a>
 
-          <Link
+          <a
             href={siteConfig.links.github}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <GitHub className="h-5 w-5 transition-transform group-hover:scale-110" />
-          </Link>
+          </a>
 
-          <Link
+          <a
             href={siteConfig.links.linkedin}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <LinkedIn className="h-5 w-5 transition-transform group-hover:scale-110" />
-          </Link>
+          </a>
 
-          <Link
+          <a
             href={`mailto:${siteConfig.links.mail}`}
             className="group flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <Mail className="h-5 w-5 transition-transform group-hover:scale-110" />
-          </Link>
+          </a>
         </div>
       </main>
     </div>

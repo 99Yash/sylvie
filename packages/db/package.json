@@ -1,5 +1,5 @@
 {
-  "name": "@ciaran/db",
+  "name": "@sylvie/db",
   "type": "module",
   "exports": {
     ".": {
@@ -19,7 +19,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
-    "@ciaran/config": "workspace:*",
+    "@sylvie/config": "workspace:*",
     "@types/pg": "^8.11.11",
     "drizzle-kit": "^0.31.2",
     "nanoid": "5.1.5",

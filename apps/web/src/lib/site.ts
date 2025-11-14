@@ -1,9 +1,47 @@
 export const siteConfig = {
-  name: 'pnpm turborepo template',
-  url: 'https://your-app.com',
-  ogImage: 'https://your-app.com/og.png',
+  name: 'Sylvie',
+  tagline: 'Your AI-Powered Second Brain',
+  url: 'https://sylvie.app',
+  ogImage: 'https://sylvie.app/og.png',
   description:
-    'A minimal and lovely monorepo template made by Yash. Next.js frontend, Elysia.js server. Better-auth authentication. Drizzle ORM database. TailwindCSS for styling. Shadcn/ui for components. TypeScript for type safety. Pnpm for package management. Turborepo for building and development. ',
+    'Sylvie is an intelligent note-taking app that thinks with you. Capture thoughts, organize ideas effortlessly, and let AI help you connect the dots. Transform scattered notes into actionable insights with smart search, automatic tagging, and contextual suggestions.',
+  shortDescription:
+    'AI-powered note-taking that helps you think better. Smart organization, instant search, and contextual insights.',
+  keywords: [
+    'AI note taking',
+    'smart notes',
+    'second brain',
+    'knowledge management',
+    'AI-powered notes',
+    'intelligent note-taking',
+    'note organization',
+    'digital notes',
+    'productivity app',
+    'note search',
+    'automatic tagging',
+    'AI writing assistant',
+    'personal knowledge base',
+    'note management',
+    'smart note app',
+  ],
+  features: [
+    'AI-powered organization',
+    'Smart search & discovery',
+    'Automatic tagging',
+    'Contextual suggestions',
+    'Cross-note connections',
+    'Voice to text',
+    'Rich text editing',
+    'Secure & private',
+  ],
+  authors: [
+    {
+      name: 'Yash Gourav Kar',
+      url: 'https://dub.sh/yashk',
+      twitter: '@YashGouravKar1',
+    },
+  ],
+  creator: 'Yash Gourav Kar',
   links: {
     x: 'https://x.com/YashGouravKar1',
     github: 'https://git.new/ygkr',
@@ -12,4 +50,4 @@ export const siteConfig = {
     linkedin: 'https://dub.sh/lnkedin',
     mail: 'yashgouravkar@gmail.com',
   },
-} as const;
+};
