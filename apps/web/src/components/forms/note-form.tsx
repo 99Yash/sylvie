@@ -1,35 +1,62 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { Button } from '~/components/ui/button';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldSet,
+} from '~/components/ui/field';
 import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
 import { trpc } from '~/lib/trpc';
 
 const MAX_CHARS = 280;
 
-export function NoteForm() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const queryClient = useQueryClient();
-  const remaining = MAX_CHARS - content.length;
+const formSchema = z.object({
+  title: z
+    .string()
+    .max(100, 'Title must be at most 100 characters.')
+    .optional(),
+  content: z
+    .string()
+    .max(MAX_CHARS, `Content must be at most ${MAX_CHARS} characters.`)
+    .optional(),
+});
 
+type FormValues = z.infer<typeof formSchema>;
+
+export function NoteForm() {
+  const queryClient = useQueryClient();
   const createNote = useMutation(trpc.note.create.mutationOptions());
 
-  async function handleSave(e: FormEvent) {
-    e.preventDefault();
-    if (!title.trim() && !content.trim()) return;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      content: '',
+    },
+  });
 
+  const contentValue = form.watch('content') || '';
+  const remaining = MAX_CHARS - contentValue.length;
+  const hasContent = form.watch('title')?.trim() || contentValue.trim();
+
+  async function onSubmit(data: FormValues) {
     try {
       await createNote.mutateAsync({
-        title: title.trim() || 'Untitled',
-        content: content.trim() || '',
+        title: data.title?.trim() || 'Untitled',
+        content: data.content?.trim() || '',
       });
       toast.success('Note saved successfully!');
-      setTitle('');
-      setContent('');
+      form.reset();
       // Invalidate and refetch notes list
       const listQueryOptions = trpc.note.list.queryOptions();
       await queryClient.invalidateQueries({
@@ -40,56 +67,82 @@ export function NoteForm() {
     }
   }
 
-  function handleClear() {
-    setTitle('');
-    setContent('');
-  }
-
-  const hasContent = title.trim() || content.trim();
-
   return (
     <div className="w-full max-w-2xl">
-      <form onSubmit={handleSave} className="group">
-        <div className="rounded-lg border border-transparent bg-transparent transition-colors focus-within:border-border/50 focus-within:bg-card/50">
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Untitled"
-            className="border-0 bg-transparent px-0 text-2xl font-semibold shadow-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
-          />
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing..."
-            maxLength={MAX_CHARS}
-            className="min-h-[200px] border-0 bg-transparent px-0 text-base shadow-none resize-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
-          />
-        </div>
-        <div className="mt-4 flex items-center justify-between opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-          <div className="text-xs text-muted-foreground">
-            {remaining} character{remaining === 1 ? '' : 's'} remaining
+      <form
+        id="note-form"
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="group"
+      >
+        <FieldSet className="gap-0">
+          <div className="rounded-lg border border-transparent bg-transparent transition-colors focus-within:border-border/50 focus-within:bg-card/50">
+            <FieldGroup className="gap-0">
+              <Controller
+                name="title"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field className="gap-0" data-invalid={fieldState.invalid}>
+                    <FieldContent className="gap-0">
+                      <Input
+                        {...field}
+                        placeholder="Untitled"
+                        className="border-0 bg-transparent px-0 text-2xl font-semibold shadow-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+              <Controller
+                name="content"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field className="gap-0" data-invalid={fieldState.invalid}>
+                    <FieldContent className="gap-0">
+                      <Textarea
+                        {...field}
+                        placeholder="Start writing..."
+                        maxLength={MAX_CHARS}
+                        className="min-h-[200px] border-0 bg-transparent px-0 text-base shadow-none resize-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      <FieldDescription className="mt-4 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                        {remaining} character{remaining === 1 ? '' : 's'}{' '}
+                        remaining
+                      </FieldDescription>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+            </FieldGroup>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              disabled={!hasContent || createNote.isPending}
-              className="h-8"
-            >
-              Clear
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!hasContent || createNote.isPending}
-              className="h-8"
-            >
-              {createNote.isPending ? 'Saving…' : 'Save'}
-            </Button>
-          </div>
+        </FieldSet>
+        <div className="mt-4 flex items-center justify-end gap-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => form.reset()}
+            disabled={!hasContent || createNote.isPending}
+            className="h-8"
+          >
+            Clear
+          </Button>
+          <Button
+            type="submit"
+            form="note-form"
+            size="sm"
+            disabled={!hasContent || createNote.isPending}
+            className="h-8"
+          >
+            {createNote.isPending ? 'Saving…' : 'Save'}
+          </Button>
         </div>
       </form>
     </div>
