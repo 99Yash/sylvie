@@ -8,7 +8,8 @@ import 'dotenv/config';
 import { Elysia } from 'elysia';
 
 const PORT = process.env.PORT || 3001;
-new Elysia({ adapter: node() })
+
+const app = new Elysia({ adapter: node() })
   .use(
     cors({
       origin: process.env.CORS_ORIGIN || 'http://localhost:3000',

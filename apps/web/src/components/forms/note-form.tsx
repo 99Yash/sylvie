@@ -1,95 +1,97 @@
 'use client';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Button } from '~/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
+import { trpc } from '~/lib/trpc';
 
 const MAX_CHARS = 280;
 
 export function NoteForm() {
-  const [note, setNote] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const remaining = MAX_CHARS - note.length;
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const queryClient = useQueryClient();
+  const remaining = MAX_CHARS - content.length;
 
-  function handleSave(e: FormEvent) {
+  const createNote = useMutation(trpc.note.create.mutationOptions());
+
+  async function handleSave(e: FormEvent) {
     e.preventDefault();
-    if (!note.trim()) return;
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success('Note saved');
-      setNote('');
-    }, 700);
+    if (!title.trim() && !content.trim()) return;
+
+    try {
+      await createNote.mutateAsync({
+        title: title.trim() || 'Untitled',
+        content: content.trim() || '',
+      });
+      toast.success('Note saved successfully!');
+      setTitle('');
+      setContent('');
+      // Invalidate and refetch notes list
+      const listQueryOptions = trpc.note.list.queryOptions();
+      await queryClient.invalidateQueries({
+        queryKey: listQueryOptions.queryKey,
+      });
+    } catch (error) {
+      toast.error('Failed to save note. Please try again.');
+    }
   }
 
   function handleClear() {
-    setNote('');
+    setTitle('');
+    setContent('');
   }
 
+  const hasContent = title.trim() || content.trim();
+
   return (
-    <Card className="w-full max-w-2xl text-left">
-      <CardHeader>
-        <CardTitle className="text-2xl">Quick note</CardTitle>
-        <CardDescription>
-          Jot something down. It&apos;s just for you.
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSave}>
-        <CardContent>
-          <FieldSet>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="note-textarea">Note</FieldLabel>
-                <Textarea
-                  id="note-textarea"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Write a quick note..."
-                  maxLength={MAX_CHARS}
-                  className="min-h-32 resize-none text-base"
-                />
-                <FieldDescription>
-                  {remaining} character{remaining === 1 ? '' : 's'} remaining
-                  <span className="ml-2 inline-flex items-center gap-1 text-muted-foreground/70">
-                    <span className="size-1.5 rounded-full bg-ring/70" />
-                    Autosave coming soon
-                  </span>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </FieldSet>
-        </CardContent>
-        <CardFooter className="flex items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClear}
-            disabled={!note || isSaving}
-          >
-            Clear
-          </Button>
-          <Button type="submit" disabled={!note.trim() || isSaving}>
-            {isSaving ? 'Saving…' : 'Save note'}
-          </Button>
-        </CardFooter>
+    <div className="w-full max-w-2xl">
+      <form onSubmit={handleSave} className="group">
+        <div className="rounded-lg border border-transparent bg-transparent transition-colors focus-within:border-border/50 focus-within:bg-card/50">
+          <Input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Untitled"
+            className="border-0 bg-transparent px-0 text-2xl font-semibold shadow-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
+          />
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Start writing..."
+            maxLength={MAX_CHARS}
+            className="min-h-[200px] border-0 bg-transparent px-0 text-base shadow-none resize-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
+          />
+        </div>
+        <div className="mt-4 flex items-center justify-between opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+          <div className="text-xs text-muted-foreground">
+            {remaining} character{remaining === 1 ? '' : 's'} remaining
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClear}
+              disabled={!hasContent || createNote.isPending}
+              className="h-8"
+            >
+              Clear
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!hasContent || createNote.isPending}
+              className="h-8"
+            >
+              {createNote.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 }
-

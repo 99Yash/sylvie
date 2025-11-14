@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { NoteForm } from '~/components/forms/note-form';
+import { NotesList } from '~/components/notes/notes-list';
 import { Button } from '~/components/ui/button';
 import { GitHub, LinkedIn, Mail, X } from '~/components/ui/icons';
 import { authClient } from '~/lib/auth/client';
@@ -12,9 +13,12 @@ export default function Home() {
 
   return (
     <div className="relative flex h-full items-center justify-center overflow-hidden bg-background">
-      <main className="relative z-10 flex w-full max-w-4xl flex-col items-center justify-center px-6 py-16 text-center">
+      <main className="relative z-10 flex w-full max-w-4xl flex-col items-center justify-center px-6 py-16">
         {session ? (
-          <NoteForm />
+          <div className="flex w-full flex-col items-center gap-8">
+            <NoteForm />
+            <NotesList />
+          </div>
         ) : (
           <>
             <div className="mb-12">
