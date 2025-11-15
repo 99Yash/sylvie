@@ -16,9 +16,12 @@ This guide explains how to use Docker with the Sylvie project for both developme
 
    ```env
    # Database Configuration
-   DATABASE_URL=postgresql://sylvie:sylvie@postgres:5432/sylvie
+   # ⚠️  SECURITY WARNING: The values below are examples for development.
+   #     For production, use strong, randomly generated passwords!
+   #     Generate a secure password with: openssl rand -base64 32
+   DATABASE_URL=postgresql://sylvie:your-secure-password@postgres:5432/sylvie
    POSTGRES_USER=sylvie
-   POSTGRES_PASSWORD=sylvie
+   POSTGRES_PASSWORD=your-secure-password  # ⚠️  REQUIRED - no default in docker-compose.yml
    POSTGRES_DB=sylvie
    POSTGRES_PORT=5432
 
@@ -58,6 +61,10 @@ This guide explains how to use Docker with the Sylvie project for both developme
 
 ### Required Variables
 
+- `POSTGRES_PASSWORD`: **REQUIRED** - PostgreSQL password (no default, must be set explicitly)
+  - ⚠️  **SECURITY**: Use a strong, randomly generated password for production
+  - Generate with: `openssl rand -base64 32`
+  - Never use default values in production environments
 - `DATABASE_URL`: PostgreSQL connection string
 - `NEXT_PUBLIC_SERVER_URL`: Public URL of the server (used by web app)
 - `CORS_ORIGIN`: Origin allowed for CORS requests
@@ -98,16 +105,29 @@ services:
 
 ## Production
 
+⚠️  **CRITICAL SECURITY REQUIREMENTS FOR PRODUCTION:**
+
+1. **POSTGRES_PASSWORD is REQUIRED** - The docker-compose.yml has NO default for this value
+2. **Never use default credentials** - Change POSTGRES_USER and POSTGRES_DB from defaults
+3. **Use strong passwords** - Generate with `openssl rand -base64 32`
+4. **Use secrets management** - Never hardcode credentials in files
+5. **Verify .env is gitignored** - Never commit credentials to version control
+
 For production, set the following environment variables:
 
 ```env
 NODE_ENV=production
 CORS_ORIGIN=https://yourdomain.com
 NEXT_PUBLIC_SERVER_URL=https://api.yourdomain.com
-BETTER_AUTH_SECRET=your-production-secret
+BETTER_AUTH_SECRET=your-production-secret  # Generate with: openssl rand -base64 32
 BETTER_AUTH_URL=https://api.yourdomain.com
 FRONTEND_URL=https://yourdomain.com
-DATABASE_URL=postgresql://user:password@postgres:5432/dbname
+
+# Database - ⚠️  USE STRONG, UNIQUE CREDENTIALS
+POSTGRES_USER=your_production_user  # Change from default 'sylvie'
+POSTGRES_PASSWORD=your-strong-randomly-generated-password  # REQUIRED - no default
+POSTGRES_DB=your_production_db  # Change from default 'sylvie'
+DATABASE_URL=postgresql://your_production_user:your-strong-randomly-generated-password@postgres:5432/your_production_db
 ```
 
 ## Common Commands

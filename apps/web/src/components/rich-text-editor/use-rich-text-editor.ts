@@ -1,9 +1,49 @@
+import DOMPurify from 'isomorphic-dompurify';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   FormattingState,
   RichTextEditorProps,
   UseRichTextEditorReturn,
 } from './types';
+
+/**
+ * DOMPurify configuration for sanitizing HTML content in the rich text editor
+ * Allows safe formatting tags while preventing XSS attacks
+ */
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'strong',
+    'b',
+    'em',
+    'i',
+    's',
+    'strike',
+    'del',
+    'u',
+    'code',
+    'pre',
+    'ul',
+    'ol',
+    'li',
+    'span',
+    'p',
+    'div',
+    'br',
+  ],
+  ALLOWED_ATTR: ['class', 'style'],
+  // Allow safe CSS properties for formatting
+  ALLOWED_URI_REGEXP:
+    /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+};
+
+/**
+ * Sanitize HTML content to prevent XSS attacks
+ * @param html - HTML string to sanitize
+ * @returns Sanitized HTML string
+ */
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG) as string;
+}
 
 /**
  * Custom hook for managing rich text editor functionality
@@ -28,6 +68,9 @@ export function useRichTextEditor(
   });
 
   // Rich text editor functions
+  // NOTE: This function uses modern Selection and Range APIs instead of the deprecated
+  // document.execCommand API. All formatting operations are implemented using DOM manipulation
+  // to ensure future compatibility and better control over the editing experience.
   const formatText = useCallback((command: string, value?: string) => {
     // Focus the editor first
     editorRef.current?.focus();
@@ -36,6 +79,8 @@ export function useRichTextEditor(
     if (!selection || selection.rangeCount === 0) return;
 
     const range = selection.getRangeAt(0);
+    const editor = editorRef.current;
+    if (!editor) return;
 
     // Handle different formatting commands with modern APIs
     switch (command) {
@@ -73,25 +118,172 @@ export function useRichTextEditor(
         }
         break;
 
-      case 'insertOrderedList':
-        document.execCommand('insertOrderedList', false);
+      case 'insertOrderedList': {
+        // Modern implementation: Create ordered list using DOM APIs
+        const ol = document.createElement('ol');
+        const li = document.createElement('li');
+        if (range.collapsed) {
+          li.innerHTML = '&#8203;'; // Zero-width space
+        } else {
+          li.appendChild(range.extractContents());
+        }
+        ol.appendChild(li);
+        range.insertNode(ol);
+        // Move cursor inside the list item
+        const newRange = document.createRange();
+        newRange.setStart(li, 0);
+        newRange.setEnd(li, 0);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
         break;
+      }
 
-      case 'insertUnorderedList':
-        document.execCommand('insertUnorderedList', false);
+      case 'insertUnorderedList': {
+        // Modern implementation: Create unordered list using DOM APIs
+        const ul = document.createElement('ul');
+        const li = document.createElement('li');
+        if (range.collapsed) {
+          li.innerHTML = '&#8203;'; // Zero-width space
+        } else {
+          li.appendChild(range.extractContents());
+        }
+        ul.appendChild(li);
+        range.insertNode(ul);
+        // Move cursor inside the list item
+        const newRange = document.createRange();
+        newRange.setStart(li, 0);
+        newRange.setEnd(li, 0);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
         break;
+      }
 
-      case 'insertText':
-        document.execCommand('insertText', false, value);
+      case 'insertText': {
+        // Modern implementation: Insert text using Range API
+        if (!value) break;
+        const textNode = document.createTextNode(value);
+        if (range.collapsed) {
+          range.insertNode(textNode);
+          // Move cursor after inserted text
+          range.setStartAfter(textNode);
+          range.setEndAfter(textNode);
+        } else {
+          range.deleteContents();
+          range.insertNode(textNode);
+          // Move cursor after inserted text
+          range.setStartAfter(textNode);
+          range.setEndAfter(textNode);
+        }
+        selection.removeAllRanges();
+        selection.addRange(range);
         break;
+      }
 
-      case 'insertHTML':
-        document.execCommand('insertHTML', false, value);
+      case 'insertHTML': {
+        // Modern implementation: Insert HTML using Range API
+        if (!value) break;
+        try {
+          // Sanitize HTML before inserting to prevent XSS attacks
+          const sanitizedValue = sanitizeHtml(value);
+
+          // Create a temporary container to parse HTML
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = sanitizedValue;
+
+          // Extract all nodes from the temporary container into an array
+          // (extracting removes them from tempDiv, so we need to store them first)
+          const nodes: Node[] = [];
+          while (tempDiv.firstChild) {
+            nodes.push(tempDiv.firstChild);
+          }
+
+          if (nodes.length === 0) break;
+
+          if (!range.collapsed) {
+            // Replace selection with HTML
+            range.deleteContents();
+          }
+
+          // Insert all nodes
+          // When inserting multiple nodes, we need to insert them in reverse order
+          // or adjust the range after each insertion
+          let currentRange = range.cloneRange();
+          nodes.forEach((node, index) => {
+            if (index === 0) {
+              currentRange.insertNode(node);
+            } else {
+              // After first insertion, range position changes, so we need to adjust
+              currentRange.setStartAfter(nodes[index - 1]);
+              currentRange.collapse(true);
+              currentRange.insertNode(node);
+            }
+          });
+
+          // Store reference to last inserted node for cursor positioning
+          const lastNode = nodes[nodes.length - 1];
+
+          // Move cursor to end of inserted content
+          const newRange = document.createRange();
+          if (lastNode.nodeType === Node.TEXT_NODE) {
+            newRange.setStart(lastNode, lastNode.textContent?.length || 0);
+            newRange.setEnd(lastNode, lastNode.textContent?.length || 0);
+          } else if (lastNode.nodeType === Node.ELEMENT_NODE) {
+            // For element nodes, find the last text node or position after the element
+            const walker = document.createTreeWalker(
+              lastNode,
+              NodeFilter.SHOW_TEXT,
+              null
+            );
+            let lastTextNode: Node | null = null;
+            while (walker.nextNode()) {
+              lastTextNode = walker.currentNode;
+            }
+            if (lastTextNode) {
+              newRange.setStart(
+                lastTextNode,
+                lastTextNode.textContent?.length || 0
+              );
+              newRange.setEnd(
+                lastTextNode,
+                lastTextNode.textContent?.length || 0
+              );
+            } else {
+              newRange.setStartAfter(lastNode);
+              newRange.setEndAfter(lastNode);
+            }
+          } else {
+            newRange.setStartAfter(lastNode);
+            newRange.setEndAfter(lastNode);
+          }
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        } catch (error) {
+          console.error('[RichTextEditor] Failed to insert HTML:', error);
+          // Fallback: insert as plain text
+          const textNode = document.createTextNode(value);
+          if (range.collapsed) {
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+          } else {
+            range.deleteContents();
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+          }
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
         break;
+      }
 
       default:
-        // For complex commands that are hard to replace, keep the deprecated API for now
-        document.execCommand(command, false, value);
+        // Unknown command - log warning for debugging
+        console.warn(
+          `[RichTextEditor] Unknown format command: ${command}. document.execCommand is deprecated and should not be used.`
+        );
+      // Note: We no longer fall back to execCommand. If you need a new command,
+      // implement it using modern Selection/Range APIs above.
     }
   }, []);
 
@@ -503,7 +695,7 @@ export function useRichTextEditor(
       if (!isItalic) {
         isItalic = computedStyle.fontStyle === 'italic';
         // Also check if parent element has italic class
-        if (!isItalic && element && element instanceof HTMLElement) {
+        if (!isItalic) {
           let parent = element.parentElement;
           while (parent) {
             if (parent.classList.contains('italic')) {
@@ -519,7 +711,7 @@ export function useRichTextEditor(
         isStrikethrough =
           computedStyle.textDecorationLine.includes('line-through');
         // Also check if parent element has line-through class
-        if (!isStrikethrough && element && element instanceof HTMLElement) {
+        if (!isStrikethrough) {
           let parent = element.parentElement;
           while (parent) {
             if (parent.classList.contains('line-through')) {
@@ -1044,7 +1236,7 @@ export function useRichTextEditor(
     }
 
     updateFormattingState();
-  }, [updateFormattingState, removeFormattingAtCursor]);
+  }, [updateFormattingState]);
 
   const toggleUnorderedList = useCallback(() => {
     const selection = window.getSelection();
@@ -1097,7 +1289,7 @@ export function useRichTextEditor(
     }
 
     updateFormattingState();
-  }, [updateFormattingState, removeFormattingAtCursor]);
+  }, [updateFormattingState]);
 
   const insertCode = useCallback(() => {
     const selection = window.getSelection();
@@ -1162,9 +1354,11 @@ export function useRichTextEditor(
   const setContent = useCallback(
     (content: string) => {
       if (editorRef.current) {
-        editorRef.current.innerHTML = content;
+        // Sanitize HTML before setting to prevent XSS attacks
+        const sanitizedContent = sanitizeHtml(content);
+        editorRef.current.innerHTML = sanitizedContent;
         updateFormattingState();
-        onChange?.(content);
+        onChange?.(sanitizedContent);
       }
     },
     [onChange, updateFormattingState]
@@ -1195,7 +1389,9 @@ export function useRichTextEditor(
 
     if (isInitialMount || isFormReset) {
       if (newContent) {
-        editor.innerHTML = initialContent;
+        // Sanitize HTML before setting to prevent XSS attacks
+        const sanitizedContent = sanitizeHtml(initialContent);
+        editor.innerHTML = sanitizedContent;
         editor.removeAttribute('data-empty');
       } else {
         editor.innerHTML = '';

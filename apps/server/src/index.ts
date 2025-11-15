@@ -1,10 +1,10 @@
+import 'dotenv/config';
 import { cors } from '@elysiajs/cors';
 import { node } from '@elysiajs/node';
 import { createContext } from '@sylvie/api/context';
 import { appRouter } from '@sylvie/api/routers/index';
 import { auth } from '@sylvie/auth';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import 'dotenv/config';
 import { Elysia } from 'elysia';
 
 const PORT = process.env.PORT || 3001;
