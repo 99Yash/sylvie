@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import DOMPurify from 'isomorphic-dompurify';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -16,23 +17,28 @@ import {
   FieldSet,
 } from '~/components/ui/field';
 import { Input } from '~/components/ui/input';
+import { getErrorMessage } from '~/lib/utils';
 import { trpc } from '~/lib/trpc';
 
 const MAX_CHARS = 280;
 
 /**
  * Extract plain text from HTML string for character counting
+ * Sanitizes HTML before processing to prevent XSS attacks
  */
 function getPlainText(html: string): string {
   if (typeof window === 'undefined') {
     // Server-side: basic HTML tag removal
+    // Note: Server-side regex is safe since we're not using innerHTML
     return html
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
       .trim();
   }
+  // Client-side: Sanitize HTML before setting innerHTML to prevent XSS
+  const sanitizedHtml = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
   const div = document.createElement('div');
-  div.innerHTML = html;
+  div.innerHTML = sanitizedHtml;
   return div.textContent || div.innerText || '';
 }
 
@@ -95,7 +101,68 @@ export function NoteForm() {
         queryKey: listQueryOptions.queryKey,
       });
     } catch (error) {
-      toast.error('Failed to save note. Please try again.');
+      // Log error details for debugging
+      console.error('[NoteForm] Failed to save note:', {
+        error,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        // Include tRPC error details if available
+        ...(error &&
+          typeof error === 'object' &&
+          'data' in error && {
+            trpcError: {
+              code: (error as { data?: { code?: string } }).data?.code,
+              httpStatus: (error as { data?: { httpStatus?: number } }).data
+                ?.httpStatus,
+            },
+          }),
+      });
+
+      // Extract user-friendly error message
+      const errorMessage = getErrorMessage(error);
+
+      // Provide more specific error messages based on error type
+      if (error instanceof Error) {
+        // Network errors
+        if (
+          error.message.includes('fetch') ||
+          error.message.includes('network') ||
+          error.message.includes('Failed to fetch')
+        ) {
+          toast.error(
+            'Network error: Unable to connect to the server. Please check your connection and try again.'
+          );
+          return;
+        }
+
+        // Timeout errors
+        if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          toast.error(
+            'Request timed out. The server took too long to respond. Please try again.'
+          );
+          return;
+        }
+
+        // Check for tRPC error codes (tRPC errors have a 'data' property)
+        if ('data' in error && typeof error.data === 'object' && error.data !== null) {
+          const trpcData = error.data as { code?: string; httpStatus?: number };
+          if (trpcData.code === 'UNAUTHORIZED') {
+            toast.error(
+              'You must be logged in to save notes. Please sign in and try again.'
+            );
+            return;
+          }
+          if (trpcData.code === 'FORBIDDEN') {
+            toast.error(
+              'You do not have permission to perform this action. Please contact support if this persists.'
+            );
+            return;
+          }
+        }
+      }
+
+      // Fallback to extracted error message or generic message
+      toast.error(errorMessage || 'Failed to save note. Please try again.');
     }
   }
 

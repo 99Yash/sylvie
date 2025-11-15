@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import DOMPurify from 'isomorphic-dompurify';
 import { FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -16,10 +17,12 @@ import { trpc } from '~/lib/trpc';
 
 /**
  * Extract plain text from HTML string for content preview
+ * Sanitizes HTML before processing to prevent XSS attacks
  */
 function getPlainText(html: string): string {
   if (typeof window === 'undefined') {
     // Server-side: basic HTML tag removal and entity decoding
+    // Note: Server-side regex is safe since we're not using innerHTML
     return html
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
@@ -31,8 +34,10 @@ function getPlainText(html: string): string {
       .replace(/\s+/g, ' ')
       .trim();
   }
+  // Client-side: Sanitize HTML before setting innerHTML to prevent XSS
+  const sanitizedHtml = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
   const div = document.createElement('div');
-  div.innerHTML = html;
+  div.innerHTML = sanitizedHtml;
   return div.textContent || div.innerText || '';
 }
 
