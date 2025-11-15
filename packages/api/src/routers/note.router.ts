@@ -1,4 +1,4 @@
-import { db, eq, notes } from '@sylvie/db';
+import { db, desc, eq, notes } from '@sylvie/db';
 import z from 'zod';
 import { protectedProcedure, router } from '..';
 
@@ -16,11 +16,13 @@ export const noteRouter = router({
         .returning();
       return note;
     }),
+
   list: protectedProcedure.query(async ({ ctx }) => {
     const notesList = await db
       .select()
       .from(notes)
-      .where(eq(notes.userId, ctx.session.user.id));
+      .where(eq(notes.userId, ctx.session.user.id))
+      .orderBy(desc(notes.createdAt));
     return notesList;
   }),
 

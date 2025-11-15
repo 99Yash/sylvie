@@ -12,10 +12,12 @@ export default function Home() {
   const { data: session } = authClient.useSession();
 
   return (
-    <div className="relative flex h-full items-center justify-center overflow-hidden bg-background">
-      <main className="relative z-10 flex w-full max-w-4xl flex-col items-center justify-center px-6 py-16">
+    <div className="relative flex min-h-full bg-background items-center justify-center">
+      <main
+        className={`relative z-10 flex w-full max-w-4xl flex-col items-center px-6 py-16`}
+      >
         {session ? (
-          <div className="flex w-full flex-col items-center gap-8">
+          <div className="flex w-full flex-col items-center gap-8 py-8">
             <NoteForm />
             <NotesList />
           </div>

@@ -1,0 +1,66 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+**/dist
+**/.next
+**/build
+**/out
+
+# Git
+.git
+.gitignore
+
+# Environment files (excluded from build context, but docker-compose can still read .env from project root)
+# Note: .env files are NOT copied into Docker images for security
+# They are only read by docker-compose for variable substitution
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+*.tsbuildinfo
+.next
+.turbo
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+!TEMPLATE_SETUP.md
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+

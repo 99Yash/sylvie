@@ -1,5 +1,3 @@
-
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern, production-ready TypeScript monorepo template that combines Next.js, Elysia, tRPC, and more for building full-stack applications with end-to-end type safety.
@@ -142,7 +140,49 @@ your-app/
 - **`@your-app/db`**: Database schema and queries
 - **`@your-app/config`**: Shared TypeScript configurations
 
+## Docker Setup
+
+This project includes Docker configuration for easy development and deployment.
+
+### Quick Start with Docker
+
+1. **Create environment file:**
+
+   ```bash
+   # Create .env file in project root (see DOCKER.md for full list of variables)
+   cat > .env << EOF
+   DATABASE_URL=postgresql://sylvie:sylvie@postgres:5432/sylvie
+   PORT=3001
+   CORS_ORIGIN=http://localhost:3000
+   NEXT_PUBLIC_SERVER_URL=http://localhost:3001
+   NODE_ENV=development
+   EOF
+   ```
+
+2. **Start all services:**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Run database migrations:**
+   ```bash
+   docker-compose exec server pnpm --filter @sylvie/db db:push
+   ```
+
+Services will be available at:
+
+- **Web app**: http://localhost:3000
+- **API server**: http://localhost:3001
+- **PostgreSQL**: localhost:5432
+
+For detailed Docker setup instructions, environment variables, and production deployment, see [DOCKER.md](./DOCKER.md).
+
 ## Deployment
+
+### Docker (Recommended)
+
+See [DOCKER.md](./DOCKER.md) for production Docker deployment instructions.
 
 ### Vercel (Web App)
 
