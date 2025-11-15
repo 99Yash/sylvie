@@ -17,8 +17,8 @@ import {
   FieldSet,
 } from '~/components/ui/field';
 import { Input } from '~/components/ui/input';
-import { getErrorMessage } from '~/lib/utils';
 import { trpc } from '~/lib/trpc';
+import { getErrorMessage } from '~/lib/utils';
 
 const MAX_CHARS = 280;
 
@@ -101,23 +101,6 @@ export function NoteForm() {
         queryKey: listQueryOptions.queryKey,
       });
     } catch (error) {
-      // Log error details for debugging
-      console.error('[NoteForm] Failed to save note:', {
-        error,
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        // Include tRPC error details if available
-        ...(error &&
-          typeof error === 'object' &&
-          'data' in error && {
-            trpcError: {
-              code: (error as { data?: { code?: string } }).data?.code,
-              httpStatus: (error as { data?: { httpStatus?: number } }).data
-                ?.httpStatus,
-            },
-          }),
-      });
-
       // Extract user-friendly error message
       const errorMessage = getErrorMessage(error);
 
@@ -136,7 +119,10 @@ export function NoteForm() {
         }
 
         // Timeout errors
-        if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+        if (
+          error.message.includes('timeout') ||
+          error.message.includes('Timeout')
+        ) {
           toast.error(
             'Request timed out. The server took too long to respond. Please try again.'
           );
@@ -144,7 +130,11 @@ export function NoteForm() {
         }
 
         // Check for tRPC error codes (tRPC errors have a 'data' property)
-        if ('data' in error && typeof error.data === 'object' && error.data !== null) {
+        if (
+          'data' in error &&
+          typeof error.data === 'object' &&
+          error.data !== null
+        ) {
           const trpcData = error.data as { code?: string; httpStatus?: number };
           if (trpcData.code === 'UNAUTHORIZED') {
             toast.error(

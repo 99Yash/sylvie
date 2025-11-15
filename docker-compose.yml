@@ -58,20 +58,23 @@ services:
     environment:
       # Database
       # ⚠️  WARNING: Default DATABASE_URL uses insecure defaults. Set explicitly for production!
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-sylvie}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-sylvie}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sylvie:password@postgres:5432/sylvie}
       # Server
-      - PORT=${PORT:-3001}
-      - NODE_ENV=${NODE_ENV:-production}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
-      # Better Auth (optional but recommended)
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-}
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3001}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      PORT: ${PORT:-3001}
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      # Better Auth
+      # ⚠️  CRITICAL: BETTER_AUTH_SECRET is REQUIRED for secure authentication!
+      #    Generate with: openssl rand -base64 32
+      #    In production, this MUST be set to prevent authentication vulnerabilities
+      BETTER_AUTH_SECRET: '${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET environment variable is required. Set it in your .env file or environment. Generate with: openssl rand -base64 32}'
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       # OAuth Providers (optional)
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,11 +97,11 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3001}
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-http://localhost:3001}
       # Database (may be needed for server-side operations)
       # ⚠️  WARNING: Default DATABASE_URL uses insecure defaults. Set explicitly for production!
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-sylvie}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-sylvie}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sylvie:password@postgres:5432/sylvie}
     depends_on:
       - server
     networks:

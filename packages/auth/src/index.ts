@@ -3,6 +3,36 @@ import * as schema from '@sylvie/db/schema/auth';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
+// Validate BETTER_AUTH_SECRET before creating auth instance
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+if (NODE_ENV === 'production') {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret || secret.trim() === '') {
+    throw new Error(
+      `BETTER_AUTH_SECRET is required in production but is missing or empty. ` +
+        `This will cause authentication to fail or be vulnerable. ` +
+        `Generate a secure value with: openssl rand -base64 32`
+    );
+  }
+  if (secret.length < 32) {
+    console.warn(
+      `⚠️  WARNING: BETTER_AUTH_SECRET is shorter than 32 characters. ` +
+        `For better security, use a longer secret (at least 32 characters). ` +
+        `Generate with: openssl rand -base64 32`
+    );
+  }
+} else {
+  // Development: warn but don't fail
+  if (!process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET.trim() === '') {
+    console.warn(
+      `⚠️  WARNING: BETTER_AUTH_SECRET is not set in development. ` +
+        `Authentication may not work correctly. ` +
+        `Generate with: openssl rand -base64 32`
+    );
+  }
+}
+
 // Server-side auth instance (used in the backend auth server)
 // This instance has direct database access and handles authentication
 export const auth = betterAuth<BetterAuthOptions>({
