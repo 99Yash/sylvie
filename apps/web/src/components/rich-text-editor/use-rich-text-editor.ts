@@ -1,9 +1,49 @@
+import DOMPurify from 'isomorphic-dompurify';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   FormattingState,
   RichTextEditorProps,
   UseRichTextEditorReturn,
 } from './types';
+
+/**
+ * DOMPurify configuration for sanitizing HTML content in the rich text editor
+ * Allows safe formatting tags while preventing XSS attacks
+ */
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'strong',
+    'b',
+    'em',
+    'i',
+    's',
+    'strike',
+    'del',
+    'u',
+    'code',
+    'pre',
+    'ul',
+    'ol',
+    'li',
+    'span',
+    'p',
+    'div',
+    'br',
+  ],
+  ALLOWED_ATTR: ['class', 'style'],
+  // Allow safe CSS properties for formatting
+  ALLOWED_URI_REGEXP:
+    /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+};
+
+/**
+ * Sanitize HTML content to prevent XSS attacks
+ * @param html - HTML string to sanitize
+ * @returns Sanitized HTML string
+ */
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG) as string;
+}
 
 /**
  * Custom hook for managing rich text editor functionality
@@ -143,24 +183,27 @@ export function useRichTextEditor(
         // Modern implementation: Insert HTML using Range API
         if (!value) break;
         try {
+          // Sanitize HTML before inserting to prevent XSS attacks
+          const sanitizedValue = sanitizeHtml(value);
+
           // Create a temporary container to parse HTML
           const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = value;
-          
+          tempDiv.innerHTML = sanitizedValue;
+
           // Extract all nodes from the temporary container into an array
           // (extracting removes them from tempDiv, so we need to store them first)
           const nodes: Node[] = [];
           while (tempDiv.firstChild) {
             nodes.push(tempDiv.firstChild);
           }
-          
+
           if (nodes.length === 0) break;
-          
+
           if (!range.collapsed) {
             // Replace selection with HTML
             range.deleteContents();
           }
-          
+
           // Insert all nodes
           // When inserting multiple nodes, we need to insert them in reverse order
           // or adjust the range after each insertion
@@ -175,10 +218,10 @@ export function useRichTextEditor(
               currentRange.insertNode(node);
             }
           });
-          
+
           // Store reference to last inserted node for cursor positioning
           const lastNode = nodes[nodes.length - 1];
-          
+
           // Move cursor to end of inserted content
           const newRange = document.createRange();
           if (lastNode.nodeType === Node.TEXT_NODE) {
@@ -200,7 +243,10 @@ export function useRichTextEditor(
                 lastTextNode,
                 lastTextNode.textContent?.length || 0
               );
-              newRange.setEnd(lastTextNode, lastTextNode.textContent?.length || 0);
+              newRange.setEnd(
+                lastTextNode,
+                lastTextNode.textContent?.length || 0
+              );
             } else {
               newRange.setStartAfter(lastNode);
               newRange.setEndAfter(lastNode);
@@ -236,8 +282,8 @@ export function useRichTextEditor(
         console.warn(
           `[RichTextEditor] Unknown format command: ${command}. document.execCommand is deprecated and should not be used.`
         );
-        // Note: We no longer fall back to execCommand. If you need a new command,
-        // implement it using modern Selection/Range APIs above.
+      // Note: We no longer fall back to execCommand. If you need a new command,
+      // implement it using modern Selection/Range APIs above.
     }
   }, []);
 
@@ -1308,9 +1354,11 @@ export function useRichTextEditor(
   const setContent = useCallback(
     (content: string) => {
       if (editorRef.current) {
-        editorRef.current.innerHTML = content;
+        // Sanitize HTML before setting to prevent XSS attacks
+        const sanitizedContent = sanitizeHtml(content);
+        editorRef.current.innerHTML = sanitizedContent;
         updateFormattingState();
-        onChange?.(content);
+        onChange?.(sanitizedContent);
       }
     },
     [onChange, updateFormattingState]
@@ -1341,7 +1389,9 @@ export function useRichTextEditor(
 
     if (isInitialMount || isFormReset) {
       if (newContent) {
-        editor.innerHTML = initialContent;
+        // Sanitize HTML before setting to prevent XSS attacks
+        const sanitizedContent = sanitizeHtml(initialContent);
+        editor.innerHTML = sanitizedContent;
         editor.removeAttribute('data-empty');
       } else {
         editor.innerHTML = '';
