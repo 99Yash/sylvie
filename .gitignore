@@ -14,6 +14,9 @@ build
 !.env.example
 .pnpm-store
 
+# Docker overrides (local development)
+docker-compose.override.yml
+
 # IDEs and editors
 .vscode/*
 !.vscode/settings.json

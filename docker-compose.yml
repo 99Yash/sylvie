@@ -1,24 +1,97 @@
 name: sylvie
 version: '3.9'
 
+# Environment variables are loaded from .env file in the project root
+# Copy .env.example to .env and fill in your values
+# For production, use .env.production or set environment variables in your deployment platform
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: sylvie-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: sylvie
-      POSTGRES_PASSWORD: sylvie
-      POSTGRES_DB: sylvie
+      POSTGRES_USER: ${POSTGRES_USER:-sylvie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sylvie}
+      POSTGRES_DB: ${POSTGRES_DB:-sylvie}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U sylvie -d sylvie']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-sylvie} -d ${POSTGRES_DB:-sylvie}',
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - sylvie-network
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: sylvie-server
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3001}:${PORT:-3001}'
+    # Load environment variables from .env file if it exists (optional)
+    # Create .env file in project root based on DOCKER.md
+    env_file:
+      - .env
+    environment:
+      # Database
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-sylvie}:${POSTGRES_PASSWORD:-sylvie}@postgres:5432/${POSTGRES_DB:-sylvie}}
+      # Server
+      - PORT=${PORT:-3001}
+      - NODE_ENV=${NODE_ENV:-production}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      # Better Auth (optional but recommended)
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3001}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      # OAuth Providers (optional)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sylvie-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3001}
+        - NODE_ENV=${NODE_ENV:-production}
+    container_name: sylvie-web
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    # Load environment variables from .env file if it exists (optional)
+    # Create .env file in project root based on DOCKER.md
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3001}
+      # Database (may be needed for server-side operations)
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-sylvie}:${POSTGRES_PASSWORD:-sylvie}@postgres:5432/${POSTGRES_DB:-sylvie}}
+    depends_on:
+      - server
+    networks:
+      - sylvie-network
+
+networks:
+  sylvie-network:
+    driver: bridge
 
 volumes:
   postgres_data:
